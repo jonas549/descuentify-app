@@ -13,7 +13,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "@shopify/shopify-app-session-storage-prisma": "^7.0.3",
-    "prisma": "^7.1.0"
+   "prisma": "^6.19.0"
   },
   "trustedDependencies": [
     "@shopify/plugin-cloudflare"
