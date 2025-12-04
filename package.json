@@ -4,7 +4,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "shopify": "shopify",
-    "build": "shopify app build",
+    "build": "echo 'Build step skipped for extension-only app'",
     "dev": "shopify app dev",
     "info": "shopify app info",
     "generate": "shopify app generate",
