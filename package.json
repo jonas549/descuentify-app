@@ -1,0 +1,26 @@
+{
+  "name": "descuentify",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "shopify": "shopify",
+    "build": "shopify app build",
+    "dev": "shopify app dev",
+    "info": "shopify app info",
+    "generate": "shopify app generate",
+    "deploy": "shopify app deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@shopify/shopify-app-session-storage-prisma": "^7.0.3",
+    "prisma": "^7.1.0"
+  },
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "author": "Jonas",
+  "private": true,
+  "workspaces": [
+    "extensions/*"
+  ]
+}
