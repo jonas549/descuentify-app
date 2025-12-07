@@ -1,14 +1,125 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Sesiones de Shopify (requerido)
+model Session {
+  id          String    @id
+  shop        String
+  state       String
+  isOnline    Boolean   @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+  firstName   String?
+  lastName    String?
+  email       String?
+  accountOwner Boolean  @default(false)
+  locale      String?
+  collaborator Boolean? @default(false)
+  emailVerified Boolean? @default(false)
+  
+  @@index([shop])
+}
+
+// Tiendas
+model Shop {
+  id              String     @id @default(cuid())
+  shopDomain      String     @unique
+  accessToken     String
+  scope           String?
+  isActive        Boolean    @default(true)
+  installedAt     DateTime   @default(now())
+  campaigns       Campaign[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@index([shopDomain])
+}
+
+// Campañas
+model Campaign {
+  id                String           @id @default(cuid())
+  shopId            String
+  shop              Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name              String
+  type              CampaignType
+  status            CampaignStatus   @default(DRAFT)
+  discountLabel     String?
+  startDate         DateTime?
+  endDate           DateTime?
+  hasCountdown      Boolean          @default(false)
+  countdownOnProduct Boolean         @default(false)
+  countdownOnHome   Boolean          @default(false)
+  countdownType     String?
+  combineWithQuantity Boolean        @default(false)
+  combineWithBulk   Boolean          @default(false)
+  combineWithBXGY   Boolean          @default(false)
+  config            Json
+  totalRevenue      Decimal          @default(0) @db.Decimal(10, 2)
+  totalOrders       Int              @default(0)
+  products          CampaignProduct[]
+  tiers             DiscountTier[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([shopId])
+  @@index([status])
+  @@index([type])
+}
+
+enum CampaignType {
+  BULK_PRICE_EDITOR
+  QUANTITY_DISCOUNT
+  BUY_X_GET_Y
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  EXPIRED
+  PAUSED
+}
+
+// Productos de campañas
+model CampaignProduct {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  productId   String
+  variantIds  String[]
+  isExcluded  Boolean  @default(false)
+  role        String?
+  createdAt   DateTime @default(now())
+  
+  @@unique([campaignId, productId, role])
+  @@index([campaignId])
+}
+
+// Tiers de descuento (Quantity Discount)
+model DiscountTier {
+  id            String       @id @default(cuid())
+  campaignId    String
+  campaign      Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  minQuantity   Int
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  order         Int          @default(0)
+  createdAt     DateTime     @default(now())
+  
+  @@index([campaignId])
+  @@index([order])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE
 }
