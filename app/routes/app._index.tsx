@@ -5,15 +5,24 @@ import { authenticate } from "../utils/shopify.server";
 import { Card, Page, Layout, Text, BlockStack } from "@shopify/polaris";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { admin, session } = await authenticate.admin(request);
-  
-  return json({
-    shop: session.shop,
-  });
+  try {
+    const { admin, session } = await authenticate.admin(request);
+    
+    console.log("✅ Authentication successful:", session.shop);
+    
+    return json({
+      shop: session.shop,
+    });
+  } catch (error) {
+    console.error("❌ Authentication error:", error);
+    throw error;
+  }
 }
 
 export default function Index() {
   const { shop } = useLoaderData<typeof loader>();
+
+  console.log("🎨 Rendering dashboard for:", shop);
 
   return (
     <Page title="Dashboard">
