@@ -13,11 +13,12 @@ import "@shopify/polaris/build/esm/styles.css";
 export async function loader({ request }: LoaderFunctionArgs) {
   return {
     apiKey: process.env.SHOPIFY_API_KEY || "",
+    polarisTranslations: {},
   };
 }
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, polarisTranslations } = useLoaderData<typeof loader>();
 
   return (
     <html lang="es">
@@ -30,7 +31,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <AppProvider i18n={{}}>
+        <AppProvider i18n={polarisTranslations}>
           <Outlet />
         </AppProvider>
         <ScrollRestoration />
