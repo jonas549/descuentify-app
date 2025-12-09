@@ -1,17 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
-  "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/build/(.*)",
-      "dest": "/build/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/build/server/index.js"
+      "source": "/(.*)",
+      "destination": "/api/index"
     }
   ]
 }
