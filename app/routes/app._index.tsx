@@ -1,28 +1,33 @@
 import { useLoaderData } from "@remix-run/react";
-import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../utils/shopify.server";
 import { Card, Page, Layout, Text, BlockStack } from "@shopify/polaris";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("🔵 LOADER: Starting authentication...");
+  
   try {
     const { admin, session } = await authenticate.admin(request);
     
-    console.log("✅ Authentication successful:", session.shop);
+    console.log("✅ LOADER: Authentication successful");
+    console.log("📦 LOADER: Shop:", session.shop);
+    console.log("📦 LOADER: Session:", JSON.stringify(session, null, 2));
     
-    return json({
+    return {
       shop: session.shop,
-    });
+    };
   } catch (error) {
-    console.error("❌ Authentication error:", error);
+    console.error("❌ LOADER: Authentication failed:", error);
     throw error;
   }
 }
 
 export default function Index() {
+  console.log("🎨 COMPONENT: Rendering dashboard...");
+  
   const { shop } = useLoaderData<typeof loader>();
-
-  console.log("🎨 Rendering dashboard for:", shop);
+  
+  console.log("🎨 COMPONENT: Shop data:", shop);
 
   return (
     <Page title="Dashboard">
