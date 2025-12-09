@@ -6,22 +6,23 @@ import "@shopify/polaris/build/esm/styles.css";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
   
   return json({ 
-    shop,
-    apiKey: process.env.SHOPIFY_API_KEY 
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    host: url.searchParams.get("host") || "",
   });
 }
 
 export default function App() {
-  const { shop, apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, host } = useLoaderData<typeof loader>();
 
   return (
     <html lang="es">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="shopify-api-key" content={apiKey} />
+        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
         <Meta />
         <Links />
       </head>
