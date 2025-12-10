@@ -1,4 +1,5 @@
 import { Card, BlockStack, InlineStack, Text, Button } from "@shopify/polaris";
+import { Link } from "@remix-run/react";
 
 export function EmptyState() {
   const campaignTypes = [
@@ -49,7 +50,9 @@ export function EmptyState() {
             </BlockStack>
             
             <InlineStack gap="200" align="center">
-              <Button url={type.createUrl}>Crear</Button>
+              <Link to={type.createUrl}>
+                <Button>Crear</Button>
+              </Link>
             </InlineStack>
           </BlockStack>
         </Card>
