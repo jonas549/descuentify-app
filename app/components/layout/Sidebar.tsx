@@ -69,7 +69,7 @@ export function Sidebar() {
         }
         .nav-item {
           display: flex;
-          align-items: center;
+          align-items: left !important;
           gap: 12px;
           padding: 10px 12px;
           border-radius: 8px;
