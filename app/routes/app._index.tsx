@@ -1,46 +1,31 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import { redirect } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text } from "@shopify/polaris";
 import { authenticate } from "../utils/shopify.server";
-import { useEffect } from "react";
 
-type LoaderData = 
-  | { authenticated: true; shop: string; apiKey: string }
-  | { authenticated: false; apiKey: string };
-
-export async function loader({ request }: LoaderFunctionArgs): Promise<LoaderData> {
+export async function loader({ request }: LoaderFunctionArgs) {
   try {
     const { session } = await authenticate.admin(request);
     
     return {
-      authenticated: true,
       shop: session.shop,
-      apiKey: process.env.SHOPIFY_API_KEY || "",
     };
   } catch (error) {
-    return {
-      authenticated: false,
-      apiKey: process.env.SHOPIFY_API_KEY || "",
-    };
+    // No hay sesión, redirigir a login desde el servidor
+    const url = new URL(request.url);
+    const shop = url.searchParams.get("shop");
+    
+    if (!shop) {
+      throw new Response("Missing shop parameter", { status: 400 });
+    }
+    
+    return redirect(`/auth/login?shop=${shop}`);
   }
 }
 
 export default function Index() {
-  const data = useLoaderData<LoaderData>();
-
-  useEffect(() => {
-    if (!data.authenticated && typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      const shop = url.searchParams.get("shop");
-      if (shop) {
-        window.top?.location.assign(`/auth/login?shop=${shop}`);
-      }
-    }
-  }, [data.authenticated]);
-
-  if (!data.authenticated) {
-    return null;
-  }
+  const { shop } = useLoaderData<typeof loader>();
 
   return (
     <Page title="Dashboard - Descuentify">
@@ -48,7 +33,7 @@ export default function Index() {
         <Layout.Section>
           <Card>
             <Text as="h2" variant="headingMd">Bienvenido a Descuentify</Text>
-            <Text as="p">Tienda: {data.shop}</Text>
+            <Text as="p">Tienda: {shop}</Text>
           </Card>
         </Layout.Section>
       </Layout>
