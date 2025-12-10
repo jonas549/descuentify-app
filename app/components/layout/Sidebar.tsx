@@ -39,54 +39,57 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <style>{`
-        .sidebar {
-          width: 240px;
-          background: #f6f6f7;
-          height: 100vh;
-          border-right: 1px solid #e1e3e5;
-          display: flex;
-          flex-direction: column;
-        }
-        .sidebar-header {
-          padding: 20px;
-          border-bottom: 1px solid #e1e3e5;
-        }
-        .logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-weight: 600;
-          font-size: 18px;
-          color: #202223;
-          text-decoration: none;
-        }
-        .sidebar-nav {
-          padding: 16px 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        .nav-item {
-          display: flex;
-          align-items: left !important;
-          gap: 12px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          color: #202223;
-          text-decoration: none;
-          font-size: 14px;
-          transition: background 0.2s;
-          justify-content: flex-start;
-        }
-        .nav-item:hover {
-          background: #e4e5e7;
-        }
-        .nav-item.active {
-          background: #005bd3;
-          color: white;
-        }
-      `}</style>
+    <style>{`
+  .sidebar {
+    width: 240px;
+    background: #f6f6f7;
+    height: 100vh;
+    border-right: 1px solid #e1e3e5;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e1e3e5;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 18px;
+    color: #202223;
+    text-decoration: none;
+  }
+  .sidebar-nav {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #202223;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.2s;
+    text-align: left;
+  }
+  .nav-item span {
+    flex: 1;
+  }
+  .nav-item:hover {
+    background: #e4e5e7;
+  }
+  .nav-item.active {
+    background: #005bd3;
+    color: white;
+  }
+`}</style>
     </div>
   );
 }
