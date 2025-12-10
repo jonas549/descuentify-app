@@ -7,7 +7,6 @@ import {
   useLoaderData,
 } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { AppProvider } from "@shopify/polaris";
 import "@shopify/polaris/build/esm/styles.css";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -16,7 +15,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return {
     apiKey: process.env.SHOPIFY_API_KEY || "",
     host: url.searchParams.get("host") || "",
-    polarisTranslations: {},
   };
 }
 
@@ -47,9 +45,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <AppProvider i18n={{}}>
-          <Outlet />
-        </AppProvider>
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
