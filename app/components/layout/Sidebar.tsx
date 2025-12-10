@@ -77,6 +77,7 @@ export function Sidebar() {
           text-decoration: none;
           font-size: 14px;
           transition: background 0.2s;
+          justify-content: flex-start;
         }
         .nav-item:hover {
           background: #e4e5e7;
