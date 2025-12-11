@@ -114,20 +114,26 @@ export async function action({ request }: ActionFunctionArgs) {
     
     console.log("Campaign created:", campaign.id);
 
-    if (productsData.length > 0) {
-      for (const product of productsData) {
-        await prisma.campaignProduct.create({
-          data: {
-            campaignId: campaign.id,
-            productId: product.id,
-            variantIds: product.variants || [],
-            isExcluded: excludeProducts,
-            role: product.type || "product",
-          },
-        });
-      }
-      console.log(`Saved ${productsData.length} products to campaign`);
-    }
+ // Guardar productos seleccionados
+if (productsData.length > 0) {
+  for (const product of productsData) {
+    // Extraer solo los IDs de las variantes si existen
+    const variantIds = product.variants 
+      ? product.variants.map((v: any) => v.id || v) 
+      : [];
+    
+    await prisma.campaignProduct.create({
+      data: {
+        campaignId: campaign.id,
+        productId: product.id,
+        variantIds: variantIds,
+        isExcluded: excludeProducts,
+        role: applyTo,
+      },
+    });
+  }
+  console.log(`Saved ${productsData.length} products to campaign`);
+}
     
     console.log("=== ACTION END - REDIRECTING ===");
     
