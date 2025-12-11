@@ -14,21 +14,45 @@ import {
 import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@shopify/polaris-icons";
 
-export function BulkPriceEditorForm() {
+interface BulkPriceEditorFormProps {
+  onSubmit: (data: any) => void;
+  error?: string;
+}
+
+export function BulkPriceEditorForm({ onSubmit, error }: BulkPriceEditorFormProps) {
   const [campaignName, setCampaignName] = useState("");
   const [discountType, setDiscountType] = useState("percentage");
   const [discountValue, setDiscountValue] = useState("0");
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
   
   // Collapsibles state
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
 
+  const handleSubmit = () => {
+    onSubmit({
+      campaignName,
+      discountType,
+      discountValue,
+      startDate,
+      startTime,
+    });
+  };
+
   return (
     <BlockStack gap="400">
+      {/* Error banner */}
+      {error && (
+        <Banner tone="critical">
+          <p>{error}</p>
+        </Banner>
+      )}
+
       {/* Alert amarillo */}
       <Banner tone="warning" onDismiss={() => {}}>
         <p>
-          Activar <strong>price rules</strong> actualizará los precios de tus productos. Si usas otras apps que también ajustan precios, sus cambios pueden superponerse. Para evitar conflictos, es mejor desactivar todas las reglas de precio antes de hacer cambios manuales. Además, si decides desinstalar Discounty, asegúrate de deshabilitar todas las reglas de precio primero.
+          Activar <strong>price rules</strong> actualizará los precios de tus productos. Si usas otras apps que también ajustan precios, sus cambios pueden superponerse.
         </p>
       </Banner>
 
@@ -125,7 +149,7 @@ export function BulkPriceEditorForm() {
           />
           <Button>Explorar</Button>
           <Checkbox label="Excluir productos específicos" />
-          <Checkbox label="Actualizar automáticamente los productos de la campaña cuando se agreguen o eliminen artículos de tu tienda" />
+          <Checkbox label="Actualizar automáticamente los productos de la campaña" />
           <Button variant="plain">Calcular conteo de artículos</Button>
           <Text as="p" variant="bodySm" tone="subdued">📝 0 Productos 0 variantes</Text>
         </BlockStack>
@@ -162,15 +186,15 @@ export function BulkPriceEditorForm() {
                 <TextField
                   label="Fecha de inicio"
                   type="date"
-                  value=""
-                  onChange={() => {}}
+                  value={startDate}
+                  onChange={setStartDate}
                   autoComplete="off"
                 />
                 <TextField
                   label="Hora de inicio"
                   type="time"
-                  value=""
-                  onChange={() => {}}
+                  value={startTime}
+                  onChange={setStartTime}
                   autoComplete="off"
                 />
               </InlineStack>
@@ -178,6 +202,16 @@ export function BulkPriceEditorForm() {
             </BlockStack>
           </Collapsible>
         </BlockStack>
+      </Card>
+
+      {/* Submit Button */}
+      <Card>
+        <InlineStack align="end" gap="300">
+          <Button url="/app/campaigns">Cancelar</Button>
+          <Button variant="primary" onClick={handleSubmit}>
+            Guardar campaña
+          </Button>
+        </InlineStack>
       </Card>
     </BlockStack>
   );
