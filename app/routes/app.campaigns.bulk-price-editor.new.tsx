@@ -91,7 +91,7 @@ export default function BulkPriceEditorNew() {
       title="Crear editor de precios masivo"
       backAction={{ url: "/app/campaigns" }}
     >
-      <p>Formulario temporal - en construcción</p>
+      <p>Formulario temporal - en construcciónm</p>
     </Page>
   );
 }
