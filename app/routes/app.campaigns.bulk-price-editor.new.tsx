@@ -162,26 +162,33 @@ function BulkPriceEditorFormComplete() {
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
 
-  const handleOpenPicker = useCallback(async () => {
-    let resourceType: "product" | "collection" | "productvariant" = "product";
-    
-    if (applyTo === "collections") {
-      resourceType = "collection";
-    } else if (applyTo === "products_variants") {
-      resourceType = "productvariant";
-    }
+ const handleOpenPicker = useCallback(async () => {
+  let resourceType: "product" | "collection" | "variant" = "product";
+  
+  if (applyTo === "collections") {
+    resourceType = "collection";
+  } else if (applyTo === "variants") {
+    resourceType = "variant";
+  } else if (applyTo === "products") {
+    resourceType = "product";
+  }
 
-    if (typeof window !== "undefined" && (window as any).shopify) {
+  if (typeof window !== "undefined" && (window as any).shopify) {
+    try {
       const selection = await (window as any).shopify.resourcePicker({
         type: resourceType,
         multiple: true,
       });
 
       if (selection) {
+        console.log("Selected items:", selection);
         setSelectedProducts(selection);
       }
+    } catch (error) {
+      console.error("Error opening picker:", error);
     }
-  }, [applyTo]);
+  }
+}, [applyTo]);
 
   const handleSubmit = () => {
     const formData = new FormData();
@@ -248,17 +255,17 @@ function BulkPriceEditorFormComplete() {
       <Card>
         <BlockStack gap="300">
           <Text as="h2" variant="headingMd">Aplicar descuento a</Text>
-          <Select
-            label=""
-            options={[
-              { label: "Productos y variantes específicos", value: "products_variants" },
-              { label: "Colecciones", value: "collections" },
-              { label: "Toda la tienda", value: "all_store" },
-              { label: "Productos con tags específicos", value: "tags" },
-            ]}
-            value={applyTo}
-            onChange={setApplyTo}
-          />
+         <Select
+  label=""
+  options={[
+    { label: "Productos", value: "products" },
+    { label: "Variantes", value: "variants" },
+    { label: "Colecciones", value: "collections" },
+    { label: "Toda la tienda", value: "all_store" },
+  ]}
+  value={applyTo}
+  onChange={setApplyTo}
+/>
 
           {applyTo !== "all_store" && (
             <>
