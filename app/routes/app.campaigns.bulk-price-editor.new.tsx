@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useActionData, useSubmit } from "@remix-run/react";
-import { Page, Layout } from "@shopify/polaris";
+import { Page } from "@shopify/polaris";
 import { authenticate } from "~/utils/shopify.server";
 import { prisma } from "~/utils/db.server";
 
@@ -91,7 +90,7 @@ export default function BulkPriceEditorNew() {
       title="Crear editor de precios masivo"
       backAction={{ url: "/app/campaigns" }}
     >
-      <p>Formulario temporal - en construcciónm</p>
+      <p>Formulario temporal - en construcción</p>
     </Page>
   );
 }
