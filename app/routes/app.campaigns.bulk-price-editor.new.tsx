@@ -1,8 +1,10 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Page } from "@shopify/polaris";
+import { useActionData, useSubmit, Form } from "@remix-run/react";
+import { Page, Layout, Card, TextField, Select, Button, BlockStack, InlineStack, Banner } from "@shopify/polaris";
 import { authenticate } from "~/utils/shopify.server";
 import { prisma } from "~/utils/db.server";
+import { useState } from "react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticate.admin(request);
@@ -84,13 +86,75 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
+function BulkPriceEditorFormSimple() {
+  const [campaignName, setCampaignName] = useState("");
+  const [discountValue, setDiscountValue] = useState("0");
+  const submit = useSubmit();
+
+  const handleSubmit = () => {
+    const formData = new FormData();
+    formData.append("campaignName", campaignName);
+    formData.append("discountType", "percentage");
+    formData.append("discountValue", discountValue);
+    submit(formData, { method: "post" });
+  };
+
+  return (
+    <BlockStack gap="400">
+      <Card>
+        <BlockStack gap="300">
+          <TextField
+            label="Nombre de campaña"
+            value={campaignName}
+            onChange={setCampaignName}
+            placeholder="ej. 20% off"
+            autoComplete="off"
+          />
+        </BlockStack>
+      </Card>
+
+      <Card>
+        <BlockStack gap="300">
+          <TextField
+            label="Descuento (%)"
+            type="number"
+            value={discountValue}
+            onChange={setDiscountValue}
+            autoComplete="off"
+          />
+        </BlockStack>
+      </Card>
+
+      <Card>
+        <InlineStack align="end" gap="300">
+          <Button url="/app/campaigns">Cancelar</Button>
+          <Button variant="primary" onClick={handleSubmit}>
+            Guardar campaña
+          </Button>
+        </InlineStack>
+      </Card>
+    </BlockStack>
+  );
+}
+
 export default function BulkPriceEditorNew() {
+  const actionData = useActionData<typeof action>();
+
   return (
     <Page 
       title="Crear editor de precios masivo"
       backAction={{ url: "/app/campaigns" }}
     >
-      <p>Formulario temporal - en construcción</p>
+      <Layout>
+        <Layout.Section>
+          {actionData?.error && (
+            <Banner tone="critical">
+              <p>{actionData.error}</p>
+            </Banner>
+          )}
+          <BulkPriceEditorFormSimple />
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
