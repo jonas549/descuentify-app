@@ -1,5 +1,13 @@
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { Page, Layout } from "@shopify/polaris";
-import { EmptyState } from "~/components/campaigns/EmptyState";
+import { authenticate } from "../utils/shopify.server";
+import { EmptyState } from "../components/campaigns/EmptyState";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  await authenticate.admin(request);
+  return json({});
+}
 
 export default function CampaignsNew() {
   return (

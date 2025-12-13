@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import { Page, Layout, Button } from "@shopify/polaris";
 import { useState, useCallback } from "react";
 import { authenticate } from "../utils/shopify.server";
@@ -74,11 +74,17 @@ export default function CampaignsIndex() {
   }
   
   return (
-    <Page 
-      title="Campañas"
-      primaryAction={<Button variant="primary" url="/app/campaigns/new">Crear campaña</Button>}
-    >
+    <Page title="Campañas">
       <Layout>
+        <Layout.Section>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "600" }}>Campañas</h1>
+            <Link to="/app/campaigns/new">
+              <Button variant="primary">Crear campaña</Button>
+            </Link>
+          </div>
+        </Layout.Section>
+
         <Layout.Section>
           <CampaignFilters onFilterChange={handleFilterChange} />
         </Layout.Section>
