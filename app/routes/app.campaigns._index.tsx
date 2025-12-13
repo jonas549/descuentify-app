@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Button } from "@shopify/polaris";
+import { useState, useCallback } from "react";
 import { authenticate } from "../utils/shopify.server";
 import { prisma } from "../utils/db.server";
 import { EmptyState } from "../components/campaigns/EmptyState";
@@ -11,16 +12,36 @@ import { CampaignTable } from "../components/campaigns/CampaignTable";
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
   
-  // Contar campañas de esta tienda
+  const shop = await prisma.shop.findUnique({
+    where: { shopDomain: session.shop },
+  });
+
+  if (!shop) {
+    return json({
+      campaignCount: 0,
+      campaigns: [],
+    });
+  }
+  
   const campaignCount = await prisma.campaign.count({
-    where: { shopId: session.shop },
+    where: { shopId: shop.id },
   });
   
-  // Obtener campañas
-  const campaigns = await prisma.campaign.findMany({
-    where: { shopId: session.shop },
+  const campaignsRaw = await prisma.campaign.findMany({
+    where: { shopId: shop.id },
+    include: {
+      products: true,
+    },
     orderBy: { createdAt: "desc" },
   });
+
+  const campaigns = campaignsRaw.map(campaign => ({
+    ...campaign,
+    totalRevenue: Number(campaign.totalRevenue),
+    createdAt: campaign.createdAt.toISOString(),
+    startDate: campaign.startDate?.toISOString() || null,
+    updatedAt: campaign.updatedAt.toISOString(),
+  }));
   
   return json({
     campaignCount,
@@ -30,8 +51,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function CampaignsIndex() {
   const { campaignCount, campaigns } = useLoaderData<typeof loader>();
+  const [currentFilter, setCurrentFilter] = useState("all");
   
-  // Empty state
+  const filteredCampaigns = campaigns.filter((campaign) => {
+    if (currentFilter === "all") return true;
+    if (currentFilter === "active") return campaign.status === "ACTIVE";
+    if (currentFilter === "scheduled") return campaign.status === "SCHEDULED";
+    if (currentFilter === "expired") return campaign.status === "EXPIRED";
+    return true;
+  });
+
+  const handleFilterChange = useCallback((filter: string) => {
+    setCurrentFilter(filter);
+  }, []);
+  
   if (campaignCount === 0) {
     return (
       <Page title="Campañas">
@@ -40,19 +73,18 @@ export default function CampaignsIndex() {
     );
   }
   
-  // Con campañas
   return (
     <Page 
       title="Campañas"
-      primaryAction={<Button variant="primary">Crear campaña</Button>}
+      primaryAction={<Button variant="primary" url="/app/campaigns/new">Crear campaña</Button>}
     >
       <Layout>
         <Layout.Section>
-          <CampaignFilters />
+          <CampaignFilters onFilterChange={handleFilterChange} />
         </Layout.Section>
         
         <Layout.Section>
-          <CampaignTable campaigns={campaigns} />
+          <CampaignTable campaigns={filteredCampaigns} />
         </Layout.Section>
       </Layout>
     </Page>
