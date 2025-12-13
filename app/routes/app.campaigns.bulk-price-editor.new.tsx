@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useActionData, useSubmit, useLoaderData } from "@remix-run/react";
+import { useActionData, useSubmit } from "@remix-run/react";
 import { 
   Page, 
   Layout, 
@@ -13,8 +13,6 @@ import {
   Banner,
   Checkbox,
   Text,
-  ResourceList,
-  ResourceItem,
   Thumbnail
 } from "@shopify/polaris";
 import { authenticate } from "~/utils/shopify.server";
@@ -44,6 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const excludeProducts = formData.get("excludeProducts") === "true";
   const startDate = formData.get("startDate") as string;
   const startTime = formData.get("startTime") as string;
+  const saveAs = formData.get("saveAs") as string; // "draft" o "active"
   
   console.log("Form data:", { 
     campaignName, 
@@ -53,7 +52,8 @@ export async function action({ request }: ActionFunctionArgs) {
     selectedProducts,
     excludeProducts,
     startDate, 
-    startTime 
+    startTime,
+    saveAs
   });
   
   if (!campaignName || !campaignName.trim()) {
@@ -90,13 +90,14 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     
     const productsData = selectedProducts ? JSON.parse(selectedProducts) : [];
+    const status = saveAs === "active" ? "ACTIVE" : "DRAFT";
     
     const campaign = await prisma.campaign.create({
       data: {
         shopId: shop.id,
         name: campaignName,
         type: "BULK_PRICE_EDITOR",
-        status: "DRAFT",
+        status: status as any,
         startDate: startDate && startTime ? new Date(`${startDate}T${startTime}`) : null,
         config: {
           discountType,
@@ -112,28 +113,27 @@ export async function action({ request }: ActionFunctionArgs) {
       },
     });
     
-    console.log("Campaign created:", campaign.id);
+    console.log("Campaign created:", campaign.id, "Status:", status);
 
- // Guardar productos seleccionados
-if (productsData.length > 0) {
-  for (const product of productsData) {
-    // Extraer solo los IDs de las variantes si existen
-    const variantIds = product.variants 
-      ? product.variants.map((v: any) => v.id || v) 
-      : [];
-    
-    await prisma.campaignProduct.create({
-      data: {
-        campaignId: campaign.id,
-        productId: product.id,
-        variantIds: variantIds,
-        isExcluded: excludeProducts,
-        role: applyTo,
-      },
-    });
-  }
-  console.log(`Saved ${productsData.length} products to campaign`);
-}
+    // Guardar productos seleccionados
+    if (productsData.length > 0) {
+      for (const product of productsData) {
+        const variantIds = product.variants 
+          ? product.variants.map((v: any) => v.id || v) 
+          : [];
+        
+        await prisma.campaignProduct.create({
+          data: {
+            campaignId: campaign.id,
+            productId: product.id,
+            variantIds: variantIds,
+            isExcluded: excludeProducts,
+            role: applyTo,
+          },
+        });
+      }
+      console.log(`Saved ${productsData.length} products to campaign`);
+    }
     
     console.log("=== ACTION END - REDIRECTING ===");
     
@@ -162,41 +162,41 @@ function BulkPriceEditorFormComplete() {
   const [campaignName, setCampaignName] = useState("");
   const [discountValue, setDiscountValue] = useState("0");
   const [discountType, setDiscountType] = useState("percentage");
-  const [applyTo, setApplyTo] = useState("products_variants");
+  const [applyTo, setApplyTo] = useState("products");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [excludeProducts, setExcludeProducts] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
 
- const handleOpenPicker = useCallback(async () => {
-  let resourceType: "product" | "collection" | "variant" = "product";
-  
-  if (applyTo === "collections") {
-    resourceType = "collection";
-  } else if (applyTo === "variants") {
-    resourceType = "variant";
-  } else if (applyTo === "products") {
-    resourceType = "product";
-  }
-
-  if (typeof window !== "undefined" && (window as any).shopify) {
-    try {
-      const selection = await (window as any).shopify.resourcePicker({
-        type: resourceType,
-        multiple: true,
-      });
-
-      if (selection) {
-        console.log("Selected items:", selection);
-        setSelectedProducts(selection);
-      }
-    } catch (error) {
-      console.error("Error opening picker:", error);
+  const handleOpenPicker = useCallback(async () => {
+    let resourceType: "product" | "collection" | "variant" = "product";
+    
+    if (applyTo === "collections") {
+      resourceType = "collection";
+    } else if (applyTo === "variants") {
+      resourceType = "variant";
+    } else if (applyTo === "products") {
+      resourceType = "product";
     }
-  }
-}, [applyTo]);
 
-  const handleSubmit = () => {
+    if (typeof window !== "undefined" && (window as any).shopify) {
+      try {
+        const selection = await (window as any).shopify.resourcePicker({
+          type: resourceType,
+          multiple: true,
+        });
+
+        if (selection) {
+          console.log("Selected items:", selection);
+          setSelectedProducts(selection);
+        }
+      } catch (error) {
+        console.error("Error opening picker:", error);
+      }
+    }
+  }, [applyTo]);
+
+  const handleSubmit = (saveAs: "draft" | "active") => {
     const formData = new FormData();
     formData.append("campaignName", campaignName);
     formData.append("discountType", discountType);
@@ -206,6 +206,7 @@ function BulkPriceEditorFormComplete() {
     formData.append("excludeProducts", excludeProducts.toString());
     formData.append("startDate", startDate);
     formData.append("startTime", startTime);
+    formData.append("saveAs", saveAs);
     submit(formData, { method: "post" });
   };
 
@@ -261,43 +262,43 @@ function BulkPriceEditorFormComplete() {
       <Card>
         <BlockStack gap="300">
           <Text as="h2" variant="headingMd">Aplicar descuento a</Text>
-         <Select
-  label=""
-  options={[
-    { label: "Productos", value: "products" },
-    { label: "Variantes", value: "variants" },
-    { label: "Colecciones", value: "collections" },
-    { label: "Toda la tienda", value: "all_store" },
-  ]}
-  value={applyTo}
-  onChange={setApplyTo}
-/>
+          <Select
+            label=""
+            options={[
+              { label: "Productos", value: "products" },
+              { label: "Variantes", value: "variants" },
+              { label: "Colecciones", value: "collections" },
+              { label: "Toda la tienda", value: "all_store" },
+            ]}
+            value={applyTo}
+            onChange={setApplyTo}
+          />
 
           {applyTo !== "all_store" && (
             <>
               <Button onClick={handleOpenPicker}>Explorar y seleccionar</Button>
               
               {selectedProducts.length > 0 && (
-  <BlockStack gap="300">
-    <Text as="p" variant="bodyMd">
-      {selectedProducts.length} {applyTo === "collections" ? "colección(es)" : "producto(s)"} seleccionado(s)
-    </Text>
-    <Card>
-      <BlockStack gap="200">
-        {selectedProducts.map((item) => (
-          <InlineStack key={item.id} gap="300" blockAlign="center">
-            {item.images?.[0] && (
-              <Thumbnail source={item.images[0].originalSrc} alt={item.title} size="small" />
-            )}
-            <Text variant="bodyMd" fontWeight="bold" as="span">
-              {item.title}
-            </Text>
-          </InlineStack>
-        ))}
-      </BlockStack>
-    </Card>
-  </BlockStack>
-)}
+                <BlockStack gap="300">
+                  <Text as="p" variant="bodyMd">
+                    {selectedProducts.length} {applyTo === "collections" ? "colección(es)" : "producto(s)"} seleccionado(s)
+                  </Text>
+                  <Card>
+                    <BlockStack gap="200">
+                      {selectedProducts.map((item) => (
+                        <InlineStack key={item.id} gap="300" blockAlign="center">
+                          {item.images?.[0] && (
+                            <Thumbnail source={item.images[0].originalSrc} alt={item.title} size="small" />
+                          )}
+                          <Text variant="bodyMd" fontWeight="bold" as="span">
+                            {item.title}
+                          </Text>
+                        </InlineStack>
+                      ))}
+                    </BlockStack>
+                  </Card>
+                </BlockStack>
+              )}
 
               <Checkbox
                 label="Excluir estos productos del descuento"
@@ -334,8 +335,11 @@ function BulkPriceEditorFormComplete() {
       <Card>
         <InlineStack align="end" gap="300">
           <Button url="/app/campaigns">Cancelar</Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            Guardar campaña
+          <Button onClick={() => handleSubmit("draft")}>
+            Guardar como borrador
+          </Button>
+          <Button variant="primary" onClick={() => handleSubmit("active")}>
+            Guardar y activar
           </Button>
         </InlineStack>
       </Card>

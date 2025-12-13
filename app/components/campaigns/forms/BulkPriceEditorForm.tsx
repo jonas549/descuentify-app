@@ -11,15 +11,22 @@ import {
   Collapsible,
   Icon
 } from "@shopify/polaris";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@shopify/polaris-icons";
 
 interface BulkPriceEditorFormProps {
   onSubmit: (data: any) => void;
   error?: string;
+  initialData?: any;
+  isEditing?: boolean;
 }
 
-export function BulkPriceEditorForm({ onSubmit, error }: BulkPriceEditorFormProps) {
+export function BulkPriceEditorForm({ 
+  onSubmit, 
+  error, 
+  initialData,
+  isEditing = false 
+}: BulkPriceEditorFormProps) {
   const [campaignName, setCampaignName] = useState("");
   const [discountType, setDiscountType] = useState("percentage");
   const [discountValue, setDiscountValue] = useState("0");
@@ -29,6 +36,25 @@ export function BulkPriceEditorForm({ onSubmit, error }: BulkPriceEditorFormProp
   // Collapsibles state
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+
+  // Cargar datos iniciales cuando hay initialData
+  useEffect(() => {
+    if (initialData) {
+      setCampaignName(initialData.name || "");
+      
+      const config = initialData.config as any;
+      if (config) {
+        setDiscountType(config.discountType || "percentage");
+        setDiscountValue(config.discountValue?.toString() || "0");
+      }
+
+      if (initialData.startDate) {
+        const date = new Date(initialData.startDate);
+        setStartDate(date.toISOString().split('T')[0]);
+        setStartTime(date.toTimeString().slice(0, 5));
+      }
+    }
+  }, [initialData]);
 
   const handleSubmit = () => {
     onSubmit({
@@ -151,7 +177,9 @@ export function BulkPriceEditorForm({ onSubmit, error }: BulkPriceEditorFormProp
           <Checkbox label="Excluir productos específicos" />
           <Checkbox label="Actualizar automáticamente los productos de la campaña" />
           <Button variant="plain">Calcular conteo de artículos</Button>
-          <Text as="p" variant="bodySm" tone="subdued">📝 0 Productos 0 variantes</Text>
+          <Text as="p" variant="bodySm" tone="subdued">
+            📝 {initialData?.products?.length || 0} Productos
+          </Text>
         </BlockStack>
       </Card>
 
@@ -209,7 +237,7 @@ export function BulkPriceEditorForm({ onSubmit, error }: BulkPriceEditorFormProp
         <InlineStack align="end" gap="300">
           <Button url="/app/campaigns">Cancelar</Button>
           <Button variant="primary" onClick={handleSubmit}>
-            Guardar campaña
+            {isEditing ? "Actualizar campaña" : "Guardar campaña"}
           </Button>
         </InlineStack>
       </Card>

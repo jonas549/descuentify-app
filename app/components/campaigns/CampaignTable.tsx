@@ -1,4 +1,5 @@
 import { Card, DataTable, Badge } from "@shopify/polaris";
+import { Link } from "@remix-run/react";
 
 interface CampaignProduct {
   id: string;
@@ -24,21 +25,18 @@ interface CampaignTableProps {
 
 export function CampaignTable({ campaigns }: CampaignTableProps) {
   const rows = campaigns.map((campaign) => {
-    // Determinar el tipo legible
     const typeLabel = 
       campaign.type === "BULK_PRICE_EDITOR" ? "Bulk price editor" :
       campaign.type === "QUANTITY_DISCOUNT" ? "Quantity discount" :
       campaign.type === "BUY_X_GET_Y" ? "Buy X Get Y" :
       campaign.type;
 
-    // Determinar el badge del estado
     const statusBadge = 
       campaign.status === "ACTIVE" ? <Badge tone="success">Activa</Badge> :
       campaign.status === "DRAFT" ? <Badge tone="info">Borrador</Badge> :
       campaign.status === "SCHEDULED" ? <Badge tone="attention">Programada</Badge> :
       <Badge>Expirada</Badge>;
 
-    // Formatear fecha
     const formattedDate = campaign.startDate 
       ? new Date(campaign.startDate).toLocaleDateString("es-ES", {
           day: "2-digit",
@@ -54,7 +52,9 @@ export function CampaignTable({ campaigns }: CampaignTableProps) {
         });
 
     return [
-      campaign.name,
+      <Link to={`/app/campaigns/${campaign.id}/edit`} style={{ color: "#2c6ecb", textDecoration: "none", fontWeight: "500" }}>
+        {campaign.name}
+      </Link>,
       typeLabel,
       statusBadge,
       `${campaign.products.length} producto${campaign.products.length !== 1 ? 's' : ''}`,
