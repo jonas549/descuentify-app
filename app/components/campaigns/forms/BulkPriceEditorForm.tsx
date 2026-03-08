@@ -9,8 +9,16 @@ import {
   InlineStack,
   Banner,
   Divider,
+  Thumbnail,
 } from "@shopify/polaris";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+interface Product {
+  id: string;
+  title: string;
+  images?: Array<{ originalSrc: string }>;
+  variants?: Array<{ id: string }>;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -289,6 +297,8 @@ export function BulkPriceEditorForm({
   const [discountType, setDiscountType] = useState("percentage");
   const [discountValue, setDiscountValue] = useState("0");
   const [excludeProducts, setExcludeProducts] = useState(false);
+  const [excludeType, setExcludeType] = useState("products");
+  const [excludedProducts, setExcludedProducts] = useState<Product[]>([]);
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -315,8 +325,35 @@ export function BulkPriceEditorForm({
     }
   }, [initialData]);
 
+  const handleOpenExcludePicker = useCallback(async () => {
+    const resourceType: "product" | "collection" =
+      excludeType === "collections" ? "collection" : "product";
+    if (typeof window !== "undefined" && (window as any).shopify) {
+      try {
+        const selection = await (window as any).shopify.resourcePicker({
+          type: resourceType,
+          multiple: true,
+        });
+        if (selection) setExcludedProducts(selection);
+      } catch (error) {
+        console.error("Error opening exclude picker:", error);
+      }
+    }
+  }, [excludeType]);
+
   const handleSubmit = () => {
-    onSubmit({ campaignName, discountType, discountValue, excludeProducts, startDate, startTime, endDate, endTime });
+    onSubmit({
+      campaignName,
+      discountType,
+      discountValue,
+      excludeProducts,
+      excludedProducts,
+      excludeType,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+    });
   };
 
   return (
@@ -386,14 +423,76 @@ export function BulkPriceEditorForm({
             <Text as="h2" variant="headingMd">
               Productos
             </Text>
+            <Text as="p" variant="bodySm" tone="subdued">
+              {initialData?.products?.length || 0} producto(s) asociado(s)
+            </Text>
             <Checkbox
               label="Excluir productos específicos del descuento"
               checked={excludeProducts}
               onChange={setExcludeProducts}
             />
-            <Text as="p" variant="bodySm" tone="subdued">
-              {initialData?.products?.length || 0} producto(s) asociado(s)
-            </Text>
+
+            {excludeProducts && (
+              <Card>
+                <BlockStack gap="300">
+                  <Text as="h3" variant="headingSm">
+                    Productos a excluir
+                  </Text>
+                  <Select
+                    label="Tipo"
+                    options={[
+                      { label: "Productos", value: "products" },
+                      { label: "Colecciones", value: "collections" },
+                    ]}
+                    value={excludeType}
+                    onChange={setExcludeType}
+                  />
+                  <Button onClick={handleOpenExcludePicker}>
+                    Explorar y seleccionar
+                  </Button>
+                  {excludedProducts.length > 0 && (
+                    <BlockStack gap="200">
+                      <Text as="p" variant="bodySm">
+                        {excludedProducts.length}{" "}
+                        {excludeType === "collections" ? "colección(es)" : "producto(s)"} a excluir
+                      </Text>
+                      {excludedProducts.map((item) => (
+                        <InlineStack
+                          key={item.id}
+                          gap="300"
+                          blockAlign="center"
+                          align="space-between"
+                        >
+                          <InlineStack gap="200" blockAlign="center">
+                            {item.images?.[0] && (
+                              <Thumbnail
+                                source={item.images[0].originalSrc}
+                                alt={item.title}
+                                size="small"
+                              />
+                            )}
+                            <Text variant="bodyMd" as="span">
+                              {item.title}
+                            </Text>
+                          </InlineStack>
+                          <Button
+                            variant="plain"
+                            tone="critical"
+                            onClick={() =>
+                              setExcludedProducts(
+                                excludedProducts.filter((p) => p.id !== item.id),
+                              )
+                            }
+                          >
+                            Eliminar
+                          </Button>
+                        </InlineStack>
+                      ))}
+                    </BlockStack>
+                  )}
+                </BlockStack>
+              </Card>
+            )}
           </BlockStack>
         </Card>
 
