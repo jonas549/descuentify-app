@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Layout } from "@shopify/polaris";
@@ -8,6 +8,30 @@ import { prisma } from "../utils/db.server";
 import { EmptyState } from "../components/campaigns/EmptyState";
 import { CampaignFilters } from "../components/campaigns/CampaignFilters";
 import { CampaignTable } from "../components/campaigns/CampaignTable";
+
+export async function action({ request }: ActionFunctionArgs) {
+  await authenticate.admin(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent") as string;
+
+  if (intent === "toggle-status") {
+    const campaignId = formData.get("campaignId") as string;
+    if (!campaignId) return json({ error: "Campaign ID required" }, { status: 400 });
+
+    const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
+    if (!campaign) return json({ error: "Campaign not found" }, { status: 404 });
+
+    const newStatus = campaign.status === "ACTIVE" ? "DRAFT" : "ACTIVE";
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: { status: newStatus as any },
+    });
+
+    return json({ success: true, newStatus });
+  }
+
+  return json({ error: "Unknown intent" }, { status: 400 });
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
