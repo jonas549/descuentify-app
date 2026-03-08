@@ -1,12 +1,5 @@
 {
+  "framework": "remix",
   "buildCommand": "npm run build",
-  "outputDirectory": "build/client",
-  "installCommand": "npm install",
-  "framework": null,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index"
-    }
-  ]
+  "installCommand": "npm install"
 }
