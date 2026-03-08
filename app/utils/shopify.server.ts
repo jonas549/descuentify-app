@@ -13,7 +13,10 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
-  isEmbeddedApp: true,
+  isEmbeddedApp: true, // CRÍTICO
+  future: {
+    unstable_newEmbeddedAuthStrategy: true, // ESTO FALTABA
+  },
   restResources: restResources as any,
 });
 

@@ -1,30 +1,41 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { Page, Layout, Card, Text, Button, ProgressBar, BlockStack, InlineStack, Badge } from "@shopify/polaris";
 import { authenticate } from "../utils/shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-
-  // TODO: Obtener datos reales de la BD
-  const stats = {
-    activeVariants: 421,
-    maxVariants: 10000,
-    createdCampaigns: 9,
-    maxCampaigns: 100,
-    allCampaigns: { count: 9, products: 421, variants: 421, revenue: 6774.07, orders: 191 },
-    activeCampaigns: { count: 9, products: 421, variants: 421, revenue: 6774.07, orders: 191 },
-    scheduledCampaigns: { count: 0 },
-    expiredCampaigns: { count: 0 },
-    totalRevenue: 6783,
-    totalOrders: 181,
-  };
-
-  return json({
-    shop: session.shop,
-    stats,
-  });
+  try {
+    const { session } = await authenticate.admin(request);
+    
+    // TODO: Obtener datos reales de la BD
+    const stats = {
+      activeVariants: 421,
+      maxVariants: 10000,
+      createdCampaigns: 9,
+      maxCampaigns: 100,
+      allCampaigns: { count: 9, products: 421, variants: 421, revenue: 6774.07, orders: 191 },
+      activeCampaigns: { count: 9, products: 421, variants: 421, revenue: 6774.07, orders: 191 },
+      scheduledCampaigns: { count: 0 },
+      expiredCampaigns: { count: 0 },
+      totalRevenue: 6783,
+      totalOrders: 181,
+    };
+    
+    return json({
+      shop: session.shop,
+      stats,
+    });
+  } catch (error) {
+    const url = new URL(request.url);
+    const shop = url.searchParams.get("shop");
+    
+    if (!shop) {
+      throw new Response("Missing shop parameter", { status: 400 });
+    }
+    
+    return redirect(`/auth/login?shop=${shop}`);
+  }
 }
 
 export default function Index() {
